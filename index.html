@@ -1,0 +1,560 @@
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7">
+	<link href="https://fonts.googleapis.com/css?family=Muli" rel="stylesheet">
+	<title>Vòng Quay May Mắn</title>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css" type="text/css" rel="stylesheet">
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+	<script type="text/javascript">
+		var token = 'EAAAAUaZA8jlABAKep8vPRzJd9Cn9vIMXE70cY0utxU5Kcl4dgL8QnZCFvTGPS7Rf421fwIcAz43izrSddBngml859klwk29ovZBqP23weIR3vRQVViY1MGPBdubm7XHfr794jdk9rPbNVBNU1h459xhv4S9ZANsq2Kd6z2wwVAZDZD';
+		var postid = '409044742861124';
+		var danhsach = [];
+		shuffle = function(o) {
+			for ( var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x)
+				;
+			return o;
+		};
+
+		String.prototype.hashCode = function(){
+		// See http://www.cse.yorku.ca/~oz/hash.html		
+		var hash = 5381;
+		for (i = 0; i < this.length; i++) {
+			char = this.charCodeAt(i);
+			hash = ((hash<<5)+hash) + char;
+			hash = hash & hash; // Convert to 32bit integer
+		}
+		return hash;
+	}
+
+	Number.prototype.mod = function(n) {
+		return ((this%n)+n)%n;
+	}</script>
+	<script type="text/javascript">
+		venues = {
+			"116208"  : "Chúc bạn may mắn lần sau ",
+			"66271"   : "+ 0.1PP",
+			"5518"    : "+ 1PP",
+			"392360"  : "Mất lượt",
+			"2210952" : "Vỗ tay đm vỗ tay",
+			"207306"  : "Đéo có gì",
+			"41457"   : "Never Die",
+			"101161"  : "+ 0PP",
+			"257424"  : "+ 0.1PP",
+			"512060"  : "+ 1PP",
+			"66244"   : "Đứa tiếp theo !",
+			"352867"  : "+ 0.2PP",
+			"22493"   : "+ 0PP",
+			"268052"  : "Thêm lượt",
+			"5665"    : "+ 0PP",
+		};
+
+		$(function() {
+
+			var venueContainer = $('#venues ul');
+			$.each(venues, function(key, item) {
+				venueContainer.append(
+					$(document.createElement("li"))
+					.append(
+						$(document.createElement("input")).attr({
+							id:    'venue-' + key
+							,name:  item
+							,value: item
+							,type:  'checkbox'
+							,checked:true
+						})
+						.change( function() {
+							var cbox = $(this)[0];
+							var segments = wheel.segments;
+							var i = segments.indexOf(cbox.value);
+
+							if (cbox.checked && i == -1) {
+								segments.push(cbox.value);
+
+							} else if ( !cbox.checked && i != -1 ) {
+								segments.splice(i, 1);
+							}
+
+							segments.sort();
+							wheel.update();
+						} )
+
+						).append(
+						$(document.createElement('label')).attr({
+							'for':  'venue-' + key
+						})
+						.text( item )
+						)
+						)
+			});
+
+		//$('#venues ul>li').tsort("input", {attr: "value"});
+	});
+</script>
+	<script type="text/javascript">// WHEEL!
+	var wheel = {
+
+		timerHandle : 0,
+		timerDelay : 33,
+
+		angleCurrent : 0,
+		angleDelta : 0,
+
+		size : 290,
+		n:0,
+		m:0,
+		canvasContext : null,
+		ketqua:'',
+		colors : [ '#ffff00', '#ffc700', '#ff9100', '#ff6301', '#ff0000', '#c6037e',
+		'#713697', '#444ea1', '#2772b2', '#0297ba', '#008e5b', '#8ac819' ],
+		segments : [],
+
+		seg_colors : [], // Cache of segments to colors
+		
+		maxSpeed : Math.PI / 16,
+
+		upTime : 1000, // How long to spin up for (in ms)
+		downTime : 17000, // How long to slow down for (in ms)
+
+		spinStart : 0,
+
+		frames : 0,
+
+		centerX : 300,
+		centerY : 300,
+
+		spin : function() {
+			if (wheel.timerHandle == 0 && wheel.n < danhsach.length ) {
+				wheel.spinStart = new Date().getTime();
+				wheel.maxSpeed = Math.PI / (16 + Math.random()); // Randomly vary how hard the spin is
+				wheel.frames = 0;
+				wheel.n = wheel.n+1;
+				wheel.m = wheel.m+1;
+				wheel.sound.play();
+				quaytay(wheel.n);
+				wheel.timerHandle = setInterval(wheel.onTimerTick, wheel.timerDelay);
+			}
+			else{				
+				$('#stargame').slideUp();
+				$('#nguoitrungthuong2').html(wheel.ketqua);
+				$('#theend').slideDown();
+			}
+
+		},
+
+		onTimerTick : function() {
+
+			wheel.frames++;
+
+			wheel.draw();
+
+			var duration = (new Date().getTime() - wheel.spinStart);
+			var progress = 0;
+			var finished = false;
+
+			if (duration < wheel.upTime) {
+				progress = duration / wheel.upTime;
+				wheel.angleDelta = wheel.maxSpeed
+				* Math.sin(progress * Math.PI / 2);
+			} else {
+				progress = duration / wheel.downTime;
+				wheel.angleDelta = wheel.maxSpeed
+				* Math.sin(progress * Math.PI / 2 + Math.PI / 2);
+				if (progress >= 1)
+					finished = true;
+			}
+
+			wheel.angleCurrent += wheel.angleDelta;
+			while (wheel.angleCurrent >= Math.PI * 2)
+				// Keep the angle in a reasonable range
+			wheel.angleCurrent -= Math.PI * 2;
+
+			if (finished) {
+				clearInterval(wheel.timerHandle);
+				wheel.timerHandle = 0;
+				wheel.angleDelta = 0;
+				$("#counter").html((wheel.frames / duration * 1000) + " FPS");
+				var i = wheel.segments.length - Math.floor((wheel.angleCurrent / (Math.PI * 2))	* wheel.segments.length) - 1;
+				if(wheel.segments[i]=='Vỗ tay đm vỗ tay'){
+					wheel.sound2.play();
+				}
+				if(wheel.segments[i]=='Never Die'){
+					var data =  {
+						message:'Chúc mừng',
+						access_token: 	token
+					}
+					$.ajax({
+						url: 'https://graph.facebook.com/v2.9/'+danhsach[wheel.n-1].id+'/comments',
+						type: 'POST',
+						dataType: 'json',
+						data: data
+					})
+					.done(function(response) {
+
+					})
+					wheel.ketqua+='<p style="font-weight:bold">'+'<img src="https://graph.facebook.com/'+danhsach[wheel.n-1].from.id+'/picture?height=50&width=50" style="border: 1px solid #fff;float:left;border-radius:50%;margin-right:10px;" /><span style="float:left;line-height:50px;margin-right:15px;">'+danhsach[wheel.n - 1].from.name+'</span></p>';
+				}
+				if(wheel.segments[i]=='Thêm lượt'){
+					wheel.n -= 1;
+				}
+				setTimeout(function() {
+					wheel.spin();
+				}, parseInt(3000));
+
+			}
+
+
+		},
+
+		init : function(optionList) {
+			try {
+				wheel.initWheel();
+				wheel.initAudio();
+				//wheel.initAudio2();
+				wheel.initCanvas();
+				wheel.draw();
+
+				$.extend(wheel, optionList);
+
+			} catch (exceptionData) {
+				alert('Wheel is not loaded ' + exceptionData);
+			}
+
+		},
+
+		initAudio : function() {
+			var sound = document.createElement('audio');
+			sound.setAttribute('src', 'wheel.mp3');
+
+			wheel.sound = sound;
+			var sound2 = document.createElement('audio');
+			sound2.setAttribute('src', 'votay.mp3');
+			wheel.sound2 = sound2;
+		},
+		initCanvas : function() {
+			var canvas = $('#wheel #canvas').get(0);
+
+			if ($.browser.msie) {
+				canvas = document.createElement('canvas');
+				$(canvas).attr('width', 1000).attr('height', 600).attr('id', 'canvas').appendTo('.wheel');
+				canvas = G_vmlCanvasManager.initElement(canvas);
+			}
+
+			canvas.addEventListener("click", wheel.spin, false);
+			wheel.canvasContext = canvas.getContext("2d");
+		},
+
+		initWheel : function() {
+			shuffle(wheel.colors);
+		},
+
+		// Called when segments have changed
+		update : function() {
+			// Ensure we start mid way on a item
+			//var r = Math.floor(Math.random() * wheel.segments.length);
+			var r = 0;
+			wheel.angleCurrent = ((r + 0.5) / wheel.segments.length) * Math.PI * 2;
+
+			var segments = wheel.segments;
+			var len      = segments.length;
+			var colors   = wheel.colors;
+			var colorLen = colors.length;
+
+			// Generate a color cache (so we have consistant coloring)
+			var seg_color = new Array();
+			for (var i = 0; i < len; i++)
+				seg_color.push( colors [ segments[i].hashCode().mod(colorLen) ] );
+
+			wheel.seg_color = seg_color;
+
+			wheel.draw();
+		},
+
+		draw : function() {
+			wheel.clear();
+			wheel.drawWheel();
+			wheel.drawNeedle();
+		},
+
+		clear : function() {
+			var ctx = wheel.canvasContext;
+			ctx.clearRect(0, 0, 1000, 800);
+		},
+
+		drawNeedle : function() {
+			var ctx = wheel.canvasContext;
+			var centerX = wheel.centerX;
+			var centerY = wheel.centerY;
+			var size = wheel.size;
+
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = '#000000';
+			ctx.fileStyle = '#ffffff';
+
+			ctx.beginPath();
+
+			ctx.moveTo(centerX + size - 40, centerY);
+			ctx.lineTo(centerX + size + 20, centerY - 10);
+			ctx.lineTo(centerX + size + 20, centerY + 10);
+			ctx.closePath();
+
+			ctx.stroke();
+			ctx.fill();
+
+			// Which segment is being pointed to?
+			var i = wheel.segments.length - Math.floor((wheel.angleCurrent / (Math.PI * 2))	* wheel.segments.length) - 1;
+
+			// Now draw the winning name
+			ctx.textAlign = "left";
+			ctx.textBaseline = "middle";
+			ctx.fillStyle = '#fff';
+			ctx.font = "20px Muli";
+			ctx.fillText(wheel.segments[i], centerX + size + 25, centerY);
+		},
+
+		drawSegment : function(key, lastAngle, angle) {
+			var ctx = wheel.canvasContext;
+			var centerX = wheel.centerX;
+			var centerY = wheel.centerY;
+			var size = wheel.size;
+
+			var segments = wheel.segments;
+			var len = wheel.segments.length;
+			var colors = wheel.seg_color;
+
+			var value = segments[key];
+			
+			ctx.save();
+			ctx.beginPath();
+
+			// Start in the centre
+			ctx.moveTo(centerX, centerY);
+			ctx.arc(centerX, centerY, size, lastAngle, angle, false); // Draw a arc around the edge
+			ctx.lineTo(centerX, centerY); // Now draw a line back to the centre
+
+			// Clip anything that follows to this area
+			//ctx.clip(); // It would be best to clip, but we can double performance without it
+			ctx.closePath();
+
+			ctx.fillStyle = colors[key];
+			ctx.fill();
+			ctx.stroke();
+
+			// Now draw the text
+			ctx.save(); // The save ensures this works on Android devices
+			ctx.translate(centerX, centerY);
+			ctx.rotate((lastAngle + angle) / 2);
+
+			ctx.fillStyle = '#000000';
+			ctx.fillText(value.substr(0, 20), size / 2 + 20, 0);
+			ctx.restore();
+
+			ctx.restore();
+		},
+
+		drawWheel : function() {
+			var ctx = wheel.canvasContext;
+
+			var angleCurrent = wheel.angleCurrent;
+			var lastAngle    = angleCurrent;
+
+			var segments  = wheel.segments;
+			var len       = wheel.segments.length;
+			var colors    = wheel.colors;
+			var colorsLen = wheel.colors.length;
+
+			var centerX = wheel.centerX;
+			var centerY = wheel.centerY;
+			var size    = wheel.size;
+
+			var PI2 = Math.PI * 2;
+
+			ctx.lineWidth    = 1;
+			ctx.strokeStyle  = '#000000';
+			ctx.textBaseline = "middle";
+			ctx.textAlign    = "center";
+			ctx.font         = "1.4em Arial";
+
+			for (var i = 1; i <= len; i++) {
+				var angle = PI2 * (i / len) + angleCurrent;
+				wheel.drawSegment(i - 1, lastAngle, angle);
+				lastAngle = angle;
+			}
+			// Draw a center circle
+			ctx.beginPath();
+			ctx.arc(centerX, centerY, 20, 0, PI2, false);
+			ctx.closePath();
+
+			ctx.fillStyle   = '#ffffff';
+			ctx.strokeStyle = '#000000';
+			ctx.fill();
+			ctx.stroke();
+
+			// Draw outer circle
+			ctx.beginPath();
+			ctx.arc(centerX, centerY, size, 0, PI2, false);
+			ctx.closePath();
+
+			ctx.lineWidth   = 10;
+			ctx.strokeStyle = '#000000';
+			ctx.stroke();
+		},
+	}
+
+	window.onload = function() {
+		wheel.init();
+
+		var segments = new Array();
+		$.each($('#venues input:checked'), function(key, cbox) {
+			segments.push( cbox.value );
+		});
+
+		wheel.segments = segments;
+		wheel.update();
+
+		// Hide the address bar (for mobile devices)!
+		setTimeout(function() {
+			window.scrollTo(0, 1);
+			//canvas.addEventListener("click", wheel.spin, false);
+		}, 0);
+		// setTimeout(function() {
+			
+
+		// }, parseInt(60000));
+	}
+	function quaytay(i){
+		if(danhsach[i-1]){
+			$('#nguoitrungthuong').html(wheel.ketqua);
+			$('#vongquay1').html('<p style="display:block;overflow:hidden">Vòng quay của:</p><div style="display:block"><div><div style="clear:both"></div><div style="display:block;overflow:hidden"><span class="imgthumb"><img src="https://graph.facebook.com/'+danhsach[i-1].from.id+'/picture?height=50&width=50"   /></span><span style="float:left;line-height:50px"> <b>'+danhsach[i-1].from.name+'</b></span></div>');
+			$('#comment').text(danhsach[i-1].message);
+			$('#vongquay').html('Lượt quay số: '+ parseInt(wheel.m));
+
+		}		
+	}
+</script></head><body>
+	<div id="stargame" style="overflow: hidden">
+		<div style="text-align: center;">
+			<h1 style="margin-top: 15px;margin-bottom: 15px;font-size: 22px;font-weight: bold">VÒNG QUAY MAY MẮN ROUND 1</h1></div>
+			<p id="demo" style="width: 100%;text-align: center;font-weight: bold;font-size: 22px;"></p>
+			<div style="clear: both;"></div>
+			<div id="venues" style="float:left;display: none;">
+				<ul>
+
+				</ul>
+			</div>
+			<div id="danhsach" style="float:left;display: block; float: left;width: 27%;min-width: 27%; ">
+				<div style="padding: 10px;">
+					<div id="tongluot"></div>
+					<div id="vongquay"></div>
+					<div id="vongquay1"></div>
+					<div style="clear: both;"></div>
+					<p id="">Comment : <span id="comment"></span></p>
+					<div style="clear: both;"></div>
+					<div id="nguoitrungthuong1">
+						<h3 style="font-weight: bold;margin: 10px 0px;width: 100%;border-bottom: 3px solid #ddd;padding-bottom: 10px">Danh sách member bất tử</h3>
+						<div style="clear: both;"></div>
+						<div id="nguoitrungthuong"></div>
+					</div>
+				</div>
+			</div>
+			<div id="wheel" style="float: left;width: 73%;min-width: 73%;"><canvas id="canvas" width="950" height="600"></canvas></div>
+
+		</div>
+
+		<script>
+// Set the date we're counting down to
+var countDownDate = new Date("Jan 5, 2018 20:00:00").getTime();
+
+// Update the count down every 1 second
+var x = setInterval(function() {
+
+    // Get todays date and time
+    var now = new Date().getTime();
+    
+    // Find the distance between now an the count down date
+    var distance = countDownDate - now;
+    
+    // Time calculations for days, hours, minutes and seconds
+    var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    
+    // Output the result in an element with id="demo"
+    document.getElementById("demo").innerHTML = "Bắt đầu sau: "+days + " Ngày " + hours + " giờ "
+    + minutes + " phút " + seconds + " giây ";
+    
+    // If the count down is over, write some text 
+    if (distance < 0) {
+    	clearInterval(x);
+    	document.getElementById("demo").innerHTML = "Game Start !!!";
+    	$.ajax({
+    		url: 'https://graph.facebook.com/v2.9/'+postid+'/comments?access_token='+token,
+    		type: 'GET',
+    		dataType: 'json',
+    	})
+    	.done(function(response) {
+    		if (!response || response.error) {
+    			location.reload()
+    		}
+    		else{
+    			danhsach = response.data;
+    			//console.log(danhsach);
+    			//wheel.spin();
+    			$('#tongluot').html('Số người tham gia: '+ danhsach.length);
+    			setTimeout(function() {
+    				wheel.spin();
+    			}, parseInt(1000));
+    			//console.log(danhsach[1].from.name);
+    		}
+    	})
+    } 
+}, 1000);
+</script>
+
+<style>
+.imgthumb{
+	float: left;
+	margin-right: 5px;
+}
+.imgthumb img{
+	max-width: 50px;
+	height: auto;
+}
+body{
+		background-image: url(https://www.fg-a.com/wallpapers/geo-shapes-black-1280b.jpg);
+		background-repeat: no-repeat;
+		margin: 0;
+    padding: 0;
+    background-attachment: fixed;
+    background-position: center;
+    background-size: cover;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    font-family: 'Muli', sans-serif;
+    width: 100%;
+    height: 100%;
+    color: #fff;
+	}
+	#canvas{
+		margin-left: 60px;
+		margin-top: 20px;
+	}
+	.imgthumb img{
+		margin: 4px 0px;
+				border-radius: 50%;
+		border:2px solid #fff;
+	}
+	#tongluot{
+		margin: 2px 0px;
+	}
+	#vongquay{
+		margin: 2px 0px;
+	}
+</style>
+<div id="theend" style="text-align: center;display: none;background: url('https://i.ytimg.com/vi/bg8yEzV_Tno/maxresdefault.jpg');background-size: cover;overflow: hidden; min-height: 100%" >
+	<h3 style="font-weight: bold;margin: 10px 0px;width: 100%;border-bottom: 3px solid #ddd;padding-bottom: 10px">Danh sách member bất tử</h3>
+	<div style="clear: both;"></div></br>
+	<div id="nguoitrungthuong2"></div></br>
+</div>
+</body></html>
